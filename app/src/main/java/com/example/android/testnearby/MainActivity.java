@@ -18,6 +18,8 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
+import android.os.CountDownTimer;
+import android.speech.tts.TextToSpeech;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
@@ -39,6 +41,7 @@ import com.google.android.gms.tasks.OnSuccessListener;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.w3c.dom.Text;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -49,7 +52,9 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+
 
 import android.app.Activity;
 import android.os.Bundle;
@@ -65,12 +70,13 @@ import com.google.android.gms.maps.model.MarkerOptions;
 
 import static android.Manifest.permission.ACCESS_FINE_LOCATION;
 
-public class MainActivity extends AppCompatActivity  {
+public class MainActivity extends AppCompatActivity implements TextToSpeech.OnInitListener {
 
     private FusedLocationProviderClient client;
     public double latitude;
     public double longitude;
     GoogleMap mGoogleMap;
+    private TextToSpeech obj;
 
     private final int REQUEST_SPEECH_RECOGNIZER = 3000;
     private final String mQuestion = "Welcome! Tell us where you want to go and we can guide you there!";
@@ -88,7 +94,20 @@ public class MainActivity extends AppCompatActivity  {
         requestPermission();
         client = LocationServices.getFusedLocationProviderClient(this);
 
-        startSpeechRecognizer();
+        obj = new TextToSpeech(this, this);
+        speakWelcome();
+        // end of text to speech
+
+        new CountDownTimer(6500, 1000) {
+
+            public void onTick(long millisUntilFinished) {
+                //mTextField.setText("seconds remaining: " + millisUntilFinished / 1000);
+            }
+
+            public void onFinish() {
+                startSpeechRecognizer();
+            }
+        }.start();
 
 
     }
@@ -111,7 +130,7 @@ public class MainActivity extends AppCompatActivity  {
                 List<String> results = data.getStringArrayListExtra
                         (RecognizerIntent.EXTRA_RESULTS);
                 mAnswer = results.get(0);
-                Toast.makeText(this, mAnswer, Toast.LENGTH_SHORT).show();
+                //Toast.makeText(this, mAnswer, Toast.LENGTH_SHORT).show();
                 keys.put("restaurant", "restaurant");
                 keys.put("restaurants", "restaurant");
                 keys.put("department store", "department_store");
@@ -132,7 +151,17 @@ public class MainActivity extends AppCompatActivity  {
 
                 mAnswer = mAnswer.toLowerCase();
                 if (!(keys.containsKey(mAnswer))) {
+                    /*finish();
+                    super.onDestroy();
+                    Intent intent = new Intent(this, MainActivity.class);
+                    startActivity(intent);*/
                     toPass = "gas_station";
+                    /*Intent intent = new Intent(MainActivity.this, MapsActivity.class);
+                    intent.putExtra("latitude", 0);
+                    intent.putExtra("longitude", 0);
+                    intent.putExtra("type", toPass);
+                    startActivity(intent);*/
+
                 } else {
                     toPass = keys.get(mAnswer);
                 }
@@ -183,6 +212,40 @@ public class MainActivity extends AppCompatActivity  {
 
     private void requestPermission() {
         ActivityCompat.requestPermissions(this, new String[]{ACCESS_FINE_LOCATION}, 1);
+    }
+
+    @Override
+    public void onDestroy() {
+        // Don't forget to shutdown!
+        if (obj != null) {
+            obj.stop();
+            obj.shutdown();
+        }
+        super.onDestroy();
+    }
+    @Override
+    public void onInit(int status) {
+        // TODO Auto-generated method stub
+
+        if (status == TextToSpeech.SUCCESS) {
+
+            int result = obj.setLanguage(Locale.US);
+
+            // tts.setPitch(5); // set pitch level
+
+            obj.setSpeechRate(1); // set speech speed rate
+
+            speakWelcome();
+
+        } else {
+            Log.e("TTS", "Initilization Failed");
+        }
+
+    }
+
+    private void speakWelcome() {
+        String text = "Welcome to Hands-Free navigation. Please tell us where you want to go";
+        obj.speak(text, TextToSpeech.QUEUE_FLUSH, null);
     }
 
 }

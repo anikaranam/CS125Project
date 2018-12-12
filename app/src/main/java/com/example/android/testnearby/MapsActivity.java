@@ -55,6 +55,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         lng = i1.getDoubleExtra("longitude", 0);
         type = i1.getStringExtra("type");
 
+
         /*StringBuilder sbValue = new StringBuilder(sbMethod());
         PlacesTask placesTask = new PlacesTask();
         placesTask.execute(sbValue.toString());*/
@@ -65,15 +66,16 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         //use your current location here
         double mLatitude = lat;
         double mLongitude = lng;
-
+        /*if (type.equals("Invalid place type")) {
+            //finish();
+            Intent i = new Intent(MapsActivity.this, EndActivity.class);
+            startActivity(i);
+        }*/
+        //Toast.makeText(this, type, Toast.LENGTH_LONG).show();
         StringBuilder sb = new StringBuilder("https://maps.googleapis.com/maps/api/place/nearbysearch/json?");
         sb.append("location=" + mLatitude + "," + mLongitude);
-        sb.append("&radius=50000");
-        sb.append("&types=" + type);
-        sb.append("&key=");
+        sb.append("&radius=50000" + "&types=" + type + "&key=");
         sb.append("AIzaSyDrGUQuAkAJ4PInwLn6TEv42BI2kEc_ph4");
-
-        //Log.d("Map", "api: " + sb.toString());
 
         return sb;
     }
@@ -86,6 +88,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         protected String doInBackground(String... url) {
             try {
                 data = getURL(url[0]);
+                Log.d("URL", data);
             } catch (Exception e) {
                 //Log.d("Background Task", e.toString());
                 e.printStackTrace();
@@ -97,7 +100,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         @Override
         protected void onPostExecute(String result) {
             MapsActivity.Parser parserTask = new MapsActivity.Parser();
-
+            Log.d("Parse", "URL made, JSON parsing started");
             // Begin parsing places JSON
             // Invokes the "doInBackground()" method of the class Place
             parserTask.execute(result);
@@ -108,6 +111,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private String getURL(String strUrl) throws IOException {
         String data = "";
         InputStream iStream = null;
+        Log.d("URL", "getting the URL");
         HttpURLConnection urlConnection = null;
         try {
             URL url = new URL(strUrl);
@@ -127,7 +131,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
             String line = "";
             while ((line = br.readLine()) != null) {
-                sb.append(line);
+                String str = line;
+                sb.append(str);
             }
 
             data = sb.toString();
@@ -135,7 +140,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             br.close();
 
         } catch (Exception e) {
-
+            Log.d("error", "URL errors");
             e.printStackTrace();
         } finally {
             iStream.close();
@@ -153,6 +158,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 /** get all the elements in the 'places' array */
                 jPlaces = jObject.getJSONArray("results");
             } catch (JSONException e) {
+                Log.d("error", "JSON error");
+                Toast.makeText(MapsActivity.this, "JSON array is null", Toast.LENGTH_LONG).show();
                 e.printStackTrace();
             }
             /** Invoking getPlaces with the json object array
@@ -175,7 +182,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     e.printStackTrace();
                 }
             }
-            return placesList;
+            List<HashMap<String, String>> listOfPlaces = placesList;
+            return listOfPlaces;
         }
 
         /**
@@ -246,7 +254,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             Log.d("Map", "list size: " + list.size());
             // Clears all the existing markers;
             mGoogleMap.clear();
-            Toast.makeText(MapsActivity.this, "hellooooo", Toast.LENGTH_LONG).show();
+            //Toast.makeText(MapsActivity.this, "hellooooo", Toast.LENGTH_LONG).show();
 
             double closestDistance;
 
