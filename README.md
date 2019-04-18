@@ -1,4 +1,4 @@
-#GetThere
+# GetThere
 
 *An Android app to navigate you to the nearest point of interest based on voice input and current location*
 Uses Google Maps SDK for Android
